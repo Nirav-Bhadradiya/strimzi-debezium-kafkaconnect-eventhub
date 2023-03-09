@@ -1,0 +1,41 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: debezium-connect-cluster
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.4.0
+  replicas: 1
+  # mention your kafka enabled azure eventhub here as a broker
+  bootstrapServers: kafkacheck.servicebus.windows.net:9093
+  config:
+    group.id: connect-cluster
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+  # this is the most important part of the setup, this will connect to Eventhub with its connection string
+  authentication:
+    type: plain
+    username: $ConnectionString
+    passwordSecret:
+      secretName: eventhubssecret
+      password: eventhubspassword
+  # it took edges for me to find out that even if there is no tls, we need to mention this property else it wont connect to azure eventhub
+  tls:
+    trustedCertificates: []
+ # strimzi will build container image and push it to the ACR with secret we created
+  build:
+    output:
+      type: docker
+      image: niravbcheckml.azurecr.io/connect:latest
+      pushSecret: my-registry-credentials
+    plugins:
+      - name: debezium-mysql-connector
+        artifacts:
+          - type: tgz
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/2.0.0.Final/debezium-connector-mysql-2.0.0.Final-plugin.tar.gz
+  template:
+    pod:
+      imagePullSecrets:
+        - name: my-registry-credentials

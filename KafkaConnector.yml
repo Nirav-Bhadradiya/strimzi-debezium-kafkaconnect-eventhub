@@ -1,0 +1,26 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: debezium-connector-mysql
+  labels:
+    strimzi.io/cluster: debezium-connect-cluster
+spec:
+  class: io.debezium.connector.mysql.MySqlConnector
+  tasksMax: 1
+  config:
+    tasks.max: 1
+    database.hostname: mysql
+    database.port: 3306
+    database.user: root
+    database.password: debezium # this can be stored as secret
+    database.server.id: 184054
+    topic.prefix: mysql
+    database.include.list: inventory
+    schema.history.internal.kafka.bootstrap.servers: kafkacheck.servicebus.windows.net:9093
+    schema.history.internal.kafka.topic: mysql.inventory.customers
+    schema.history.internal.consumer.security.protocol: "SASL_SSL"
+    schema.history.internal.consumer.sasl.mechanism: "PLAIN"
+    schema.history.internal.consumer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="Endpoint=sb://kafkacheck.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey={YOUR_SHARED_KEY}";
+    schema.history.internal.producer.security.protocol: "SASL_SSL"
+    schema.history.internal.producer.sasl.mechanism: "PLAIN"
+    schema.history.internal.producer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="Endpoint=sb://kafkacheck.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey={YOUR_SHARED_KEY}";
